@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-第二步：分析本地 raw_sources/ 原始数据库并生成分国家规则
+第二步：分析本地 raw_sources/ 原始数据库并生成分国家分片规则
 
-位置：位于 call-spam-blocklist/scripts/process_swyter_rules.py
-功能：完全在 Swyter 本地仓库下解包并分国家导出 rules 订阅。
+解决 GitHub 100MB 单文件限制：
+1. 采用紧凑型 JSON 写入 (去除 indent 缩进填充)。
+2. 设置单个 JSON 文件的记录数上限 (如单文件最多 25,000 条规则，单文件大小控制在 5MB 左右)。
+3. 当数据超量时，自动拆分为 full_block_part1.json, full_block_part2.json ... 避免 Git Push 触发 100MB 拦截。
 """
 
 import hashlib
@@ -18,6 +20,9 @@ SCRIPT_DIR = Path(__file__).parent
 REPO_DIR = SCRIPT_DIR.parent
 RAW_SWYTER_DIR = REPO_DIR / "raw_sources"
 OUT_DIR = REPO_DIR / "swyter_rules"
+
+# 单文件最大记录条数上限 (25,000 条约占 3~5MB 空间，极度安全)
+MAX_RULES_PER_FILE = 25000
 
 CATEGORY_TAGS = [
     "choose_category",  # 0
@@ -129,8 +134,48 @@ def parse_data_slice(file_path: Path, global_data: dict, needed_magic: str):
             pass
 
 
+def save_chunked_rules(country_code: str, rules_list: list):
+    """将规则列表自动拆分分片写入 JSON，单文件严格不超过上限"""
+    country_dir = OUT_DIR / country_code
+    country_dir.mkdir(parents=True, exist_ok=True)
+
+    total = len(rules_list)
+    if total == 0:
+        return
+
+    # 如果小于单文件上限，保存为单个文件
+    if total <= MAX_RULES_PER_FILE:
+        out_file = country_dir / "full_block.json"
+        with open(out_file, "w", encoding="utf-8") as f:
+            json.dump(rules_list, f, ensure_ascii=False, separators=(",", ":"))
+        size_mb = out_file.stat().st_size / (1024 * 1024)
+        print(f"  -> 已保存 [{country_code}] 规则 ({total} 条, {size_mb:.2f} MB) 到 {out_file.name}")
+    else:
+        # 分片拆分写入
+        part_idx = 1
+        for i in range(0, total, MAX_RULES_PER_FILE):
+            chunk = rules_list[i : i + MAX_RULES_PER_FILE]
+            out_file = country_dir / f"full_block_part{part_idx}.json"
+            with open(out_file, "w", encoding="utf-8") as f:
+                json.dump(chunk, f, ensure_ascii=False, separators=(",", ":"))
+            size_mb = out_file.stat().st_size / (1024 * 1024)
+            print(f"  -> 已保存 [{country_code}] 分片 {part_idx} ({len(chunk)} 条, {size_mb:.2f} MB) 到 {out_file.name}")
+            part_idx += 1
+
+        # 保存一个索引清单
+        index_file = country_dir / "index.json"
+        index_data = {
+            "country": country_code,
+            "total_rules": total,
+            "parts_count": part_idx - 1,
+            "files": [f"full_block_part{p}.json" for p in range(1, part_idx)],
+        }
+        with open(index_file, "w", encoding="utf-8") as f:
+            json.dump(index_data, f, ensure_ascii=False, indent=2)
+
+
 def main():
-    print("=== 第二步：分析本地 raw_sources/ 原始数据库并生成规则订阅 ===")
+    print("=== 第二步：分析本地 raw_sources/ 原始数据库并分片生成订阅 ===")
 
     if not RAW_SWYTER_DIR.exists():
         print(f"❌ 原始数据库目录不存在: {RAW_SWYTER_DIR}，请先执行第一步下载。")
@@ -145,7 +190,7 @@ def main():
     if update_bin.exists():
         parse_data_slice(update_bin, global_data, "MTZD")
 
-    print(f"✅ 从原始库中成功解析并过滤出 {len(global_data)} 条有效骚扰号码。")
+    print(f"✅ 从原始库中成功解析出 {len(global_data)} 条有效骚扰号码。")
 
     by_country = defaultdict(list)
 
@@ -169,24 +214,16 @@ def main():
         }
         by_country[country].append(rule)
 
+    # 依次按国家保存分片规则
     global_rules = []
     for country, rules in by_country.items():
         global_rules.extend(rules)
-        country_dir = OUT_DIR / country
-        country_dir.mkdir(parents=True, exist_ok=True)
-        out_file = country_dir / "full_block.json"
-        with open(out_file, "w", encoding="utf-8") as f:
-            json.dump(rules, f, ensure_ascii=False, indent=2)
-        print(f"  -> 已保存 [{country}] 规则 ({len(rules)} 条) 到 {out_file}")
+        save_chunked_rules(country, rules)
 
-    global_dir = OUT_DIR / "GLOBAL"
-    global_dir.mkdir(parents=True, exist_ok=True)
-    global_file = global_dir / "full_block.json"
-    with open(global_file, "w", encoding="utf-8") as f:
-        json.dump(global_rules, f, ensure_ascii=False, indent=2)
-    print(f"  -> 已保存 [GLOBAL] 汇总规则 ({len(global_rules)} 条) 到 {global_file}")
+    # 导出 GLOBAL 全球汇总规则 (分片存储)
+    save_chunked_rules("GLOBAL", global_rules)
 
-    print("\n=== 第二步：规则订阅转换完成 ===")
+    print("\n=== 第二步：分片规则订阅转换完成 ===")
 
 
 if __name__ == "__main__":
