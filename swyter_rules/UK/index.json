@@ -1,0 +1,14 @@
+{
+  "country": "UK",
+  "total_rules": 158739,
+  "parts_count": 7,
+  "files": [
+    "full_block_part1.json",
+    "full_block_part2.json",
+    "full_block_part3.json",
+    "full_block_part4.json",
+    "full_block_part5.json",
+    "full_block_part6.json",
+    "full_block_part7.json"
+  ]
+}
