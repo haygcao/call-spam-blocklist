@@ -1,0 +1,43 @@
+name: Swyter Repository Native Data Processing
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  sync-and-process:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. 检出 Swyter 原始仓库
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 2. 配置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # ===== 第一步：拉取并保存原封不动的原始数据库 =====
+      - name: 3. 执行拉取脚本 (保存原始库至 raw_sources/)
+        run: |
+          python scripts/download_raw_swyter.py
+
+      # ===== 第二步：分析 raw_sources/ 原始数据库，生成规则 =====
+      - name: 4. 执行分析脚本 (分析解包存入 swyter_rules/)
+        run: |
+          python scripts/process_swyter_rules.py
+
+      - name: 5. 提交处理结果
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add raw_sources/ swyter_rules/
+          if git diff --staged --quiet; then
+            echo "没有变化，跳过 Commit。"
+          else
+            git commit -m "chore: 自动同步 ShouldIAnswer 原始库与规则解包" || true
+            git push
+          fi
