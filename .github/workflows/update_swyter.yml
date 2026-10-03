@@ -1,4 +1,4 @@
-name: Swyter Repository Native Data Processing
+name: Auto Update Blocklist Subscriptions
 
 on:
   schedule:
@@ -8,9 +8,11 @@ on:
 jobs:
   sync-and-process:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - name: 1. 检出 Swyter 原始仓库
+      - name: 1. 检出仓库
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -20,24 +22,31 @@ jobs:
         with:
           python-version: '3.10'
 
-      # ===== 第一步：拉取并保存原封不动的原始数据库 =====
-      - name: 3. 执行拉取脚本 (保存原始库至 raw_sources/)
-        run: |
-          python scripts/download_raw_swyter.py
+      - name: 3. 安装依赖 (phonenumbers)
+        run: pip install phonenumbers
 
-      # ===== 第二步：分析 raw_sources/ 原始数据库，生成规则 =====
-      - name: 4. 执行分析脚本 (分析解包存入 swyter_rules/)
-        run: |
-          python scripts/process_swyter_rules.py
+      # 步骤 1：下载原始二进制数据库存入 raw_sources/
+      - name: 4. 执行第一步：下载原始二进制数据库 (raw_sources/)
+        run: python scripts/download_raw.py
 
-      - name: 5. 提交处理结果
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add raw_sources/ swyter_rules/
-          if git diff --staged --quiet; then
-            echo "没有变化，跳过 Commit。"
-          else
-            git commit -m "chore: 自动同步 ShouldIAnswer 原始库与规则解包" || true
-            git push
-          fi
+      # 步骤 2A：解包源 A 存入 source_a/
+      - name: 5. 执行第二步 A：解包源 A 存入 source_a/
+        run: python scripts/extract_source_a.py
+
+      # 步骤 2B：抓取源 B 存入 source_b/
+      - name: 6. 执行第二步 B：抓取源 B 存入 source_b/
+        run: python scripts/fetch_source_b.py
+
+      # 步骤 3：多源合并去重存入 merge/
+      - name: 7. 执行第三步：多源合并去重导出存入 merge/
+        run: python scripts/merge_and_deduplicate.py
+
+      # 步骤 4：自动提交所有生成的规整规则
+      - name: 8. 自动提交并推送变动 (GitHub Actions Bot)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto update blocklist rules and raw sources [skip ci]"
+          file_pattern: "raw_sources/ source_a/ source_b/ merge/"
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          push_options: '--force'
