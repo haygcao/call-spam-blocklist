@@ -1,0 +1,1 @@
+[{"id":"84a88b24725644931c0bd4665c827e0c","name":"Unsolicited Call","ruleType":"phone_rule","phoneNumber":"+172155491","labelId":"telemarketing","priority":3,"action":"block","isEnabled":1,"count":1}]

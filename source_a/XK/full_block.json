@@ -1,0 +1,1 @@
+[{"id":"5f268971b9457c1fea28d2790c7fe7fc","name":"Nuisance Call","ruleType":"phone_rule","phoneNumber":"+383943542","labelId":"spamlikely","priority":3,"action":"block","isEnabled":1,"count":1}]

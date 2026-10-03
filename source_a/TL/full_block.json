@@ -1,0 +1,1 @@
+[{"id":"193c586b39a9a4e4b0caec95b5f8888e","name":"Unsolicited Call","ruleType":"phone_rule","phoneNumber":"+6704400625","labelId":"telemarketing","priority":3,"action":"block","isEnabled":1,"count":2}]

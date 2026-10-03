@@ -1,0 +1,1 @@
+[{"id":"194c3d17c9c5e99ef0c7d105c099d00b","name":"Nuisance Call","ruleType":"phone_rule","phoneNumber":"+35020077777","labelId":"spamlikely","priority":3,"action":"block","isEnabled":1,"count":6,"avatar":"","subscriptionId":""}]

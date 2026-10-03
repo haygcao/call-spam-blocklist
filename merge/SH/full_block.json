@@ -1,0 +1,1 @@
+[{"id":"73e1ec8f46ed90ca6166ac8ddb7ce1e6","name":"Unsolicited Call","ruleType":"phone_rule","phoneNumber":"+29029303","labelId":"telemarketing","priority":3,"action":"block","isEnabled":1,"count":2,"avatar":"","subscriptionId":""}]

@@ -1,0 +1,1 @@
+[{"id":"8c3b1df9a3f1f85813479b1ae68d2a93","name":"Unsolicited Call","ruleType":"phone_rule","phoneNumber":"+298512100","labelId":"telemarketing","priority":3,"action":"block","isEnabled":1,"count":1}]

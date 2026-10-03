@@ -1,0 +1,1 @@
+[{"id":"cd6c6fd3c4628f78ced2565ca30a57ea","name":"Scam Call","ruleType":"phone_rule","phoneNumber":"+290871447","labelId":"scamslikely","priority":3,"action":"block","isEnabled":1,"count":1}]

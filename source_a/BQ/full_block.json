@@ -1,0 +1,1 @@
+[{"id":"68d052f8d1e043ca9008ad6274fff10e","name":"Silent Call","ruleType":"phone_rule","phoneNumber":"+5997188009","labelId":"robocall","priority":3,"action":"block","isEnabled":1,"count":3}]

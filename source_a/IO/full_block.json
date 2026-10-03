@@ -1,0 +1,1 @@
+[{"id":"a532253e171a06408760683c6e49e765","name":"Nuisance Call","ruleType":"phone_rule","phoneNumber":"+246680088","labelId":"spamlikely","priority":3,"action":"block","isEnabled":1,"count":1}]

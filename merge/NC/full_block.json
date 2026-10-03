@@ -1,0 +1,1 @@
+[{"id":"66039d0935385e0f72627e8146b0717b","name":"Nuisance Call","ruleType":"phone_rule","phoneNumber":"+687957234","labelId":"spamlikely","priority":3,"action":"block","isEnabled":1,"count":10,"avatar":"","subscriptionId":""}]

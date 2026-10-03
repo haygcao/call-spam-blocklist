@@ -1,0 +1,9 @@
+{
+  "country": "CZ",
+  "total_rules": 28756,
+  "parts_count": 2,
+  "files": [
+    "full_block_part1.json",
+    "full_block_part2.json"
+  ]
+}

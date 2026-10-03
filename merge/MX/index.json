@@ -1,0 +1,11 @@
+{
+  "country": "MX",
+  "total_rules": 94585,
+  "parts_count": 4,
+  "files": [
+    "full_block_part1.json",
+    "full_block_part2.json",
+    "full_block_part3.json",
+    "full_block_part4.json"
+  ]
+}
